@@ -6,7 +6,7 @@ class Notification(BaseModel):
     topic: str
     data: str
     priority: Priority = Priority.DEFAULT
-    tags: list[str] = [""]
+    tags: list[str] = []
     title: str = ""
     link: str = ""
     attachment: str = ""
@@ -14,27 +14,20 @@ class Notification(BaseModel):
     email: str = ""
     
     def getHeaders(self):
-        headers = {}
-        headers["X-Priority"] = self.priority.value
-        if len(self.tags) > 0:
-            headers["X-Tags"] = ",".join(self.tags)
+        """
+        Method to get the headers for a notification.
+        """
+        headers = {
+            "X-Priority": self.priority.value,
+            "X-Tags": ",".join(self.tags) if self.tags else None,
+            "X-Title": self.title if self.title else None,
+            "X-Click": self.link if self.link else None,
+            "X-Attach": self.attachment if self.attachment else None,
+            "X-Actions": ";".join([",".join([action.actionType.value, action.label, action.url]) for action in self.actions]) if self.actions else None,
+            "X-Email": self.email if self.email else None,
+        }
 
-        if self.title:
-            headers["X-Title"] = self.title
-
-        if self.link:
-            headers["X-Click"] = self.link
-
-        if self.attachment:
-            headers["X-Attach"] = self.attachment
-
-        if self.actions and len(self.actions) > 0:
-            actionList = []
-            for action in self.actions:
-                actionList.append(",".join([action.actionType.value, action.label, action.url]))
-            headers["X-Actions"] = ";".join(actionList)
-
-        if self.email:
-                headers["X-Email"] = self.email
+        # Remove None values
+        headers = {k: v for k, v in headers.items() if v is not None}
         return headers
     
